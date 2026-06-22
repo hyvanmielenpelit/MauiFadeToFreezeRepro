@@ -89,6 +89,7 @@ public partial class MainPage : ContentPage
 			// and CADisplayLink is inactive, so the fade-in Task will hang indefinitely.
 			// =========================================================================
 			StatusLabel.Text = "Fading in (FadeToAsync 1.0)...";
+			MainCanvasView.Opacity = 0.0;
 			await MainCanvasView.FadeToAsync(1.0, 500);
 
 			StatusLabel.Text = "Sequence Completed Successfully!";
