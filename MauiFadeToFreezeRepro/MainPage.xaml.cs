@@ -60,16 +60,17 @@ public partial class MainPage : ContentPage
 			// BUG TRIGGER IN 10.0.60:
 			// Setting IsEnabled = false triggers the Visual State Manager (VSM) to 
 			// update the visual states of all descendent controls, including the 
-			// MainCanvasView (SKCanvasView).
+			// MainCanvasWrapper (ContentView).
 			//
 			// This invokes UpdateBackground in Microsoft.Maui.Platform.ViewExtensions (iOS).
-			// Since our SKCanvasView does not have an explicit MAUI background color, 
+			// Since the wrapper does not have an explicit MAUI background color, 
 			// the new code introduced in MAUI PR #31340 (10.0.60) assigns:
-			//     platformView.BackgroundColor = null;
+			//     if (platformView is LayoutView or ContentView)
+			//         platformView.BackgroundColor = null;
 			//
 			// When BackgroundColor becomes null, the native iOS view drops touches or 
-			// becomes transparent to touches, breaking the SKCanvasView touch event handlers
-			// permanently even after it fades back in.
+			// becomes transparent to hit-testing, breaking the touch event handlers
+			// permanently for everything inside it even after it fades back in.
 			// =========================================================================
 			MainGrid.IsEnabled = false;
 			
