@@ -73,10 +73,10 @@ public partial class MainPage : ContentPage
 			// =========================================================================
 			MainGrid.IsEnabled = false;
 			
-			MainCanvasView.Opacity = 1.0;
+			MainCanvasWrapper.Opacity = 1.0;
 
 			StatusLabel.Text = "Fading out (FadeToAsync 0.0)...";
-			await MainCanvasView.FadeToAsync(0.0, 500);
+			await MainCanvasWrapper.FadeToAsync(0.0, 500);
 
 			StatusLabel.Text = "Simulating load delay...";
 			await Task.Delay(1000);
@@ -84,8 +84,8 @@ public partial class MainPage : ContentPage
 			MainGrid.IsEnabled = true;
 			
 			StatusLabel.Text = "Fading in (FadeToAsync 1.0)...";
-			MainCanvasView.Opacity = 0.0;
-			await MainCanvasView.FadeToAsync(1.0, 500);
+			MainCanvasWrapper.Opacity = 0.0;
+			await MainCanvasWrapper.FadeToAsync(1.0, 500);
 
 			StatusLabel.Text = "Sequence completed! Now tap the red square.";
 		}

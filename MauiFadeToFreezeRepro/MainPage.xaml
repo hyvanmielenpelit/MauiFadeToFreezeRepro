@@ -22,13 +22,15 @@
                        FontSize="14" 
                        HorizontalTextAlignment="Center" />
 
-                <!-- SKCanvasView: Crucially, BackgroundColor/Background is NOT set explicitly in MAUI layout. -->
-                <skia:SKCanvasView x:Name="MainCanvasView" 
-                                   HeightRequest="200" 
-                                   WidthRequest="200"
-                                   EnableTouchEvents="True"
-                                   Touch="OnCanvasTouch"
-                                   PaintSurface="OnCanvasPaintSurface" />
+                <!-- ContentView: In GnollHack, SKCanvasView is wrapped in SwitchableCanvasView (which is a ContentView). -->
+                <ContentView x:Name="MainCanvasWrapper">
+                    <skia:SKCanvasView x:Name="MainCanvasView" 
+                                       HeightRequest="200" 
+                                       WidthRequest="200"
+                                       EnableTouchEvents="True"
+                                       Touch="OnCanvasTouch"
+                                       PaintSurface="OnCanvasPaintSurface" />
+                </ContentView>
                 
                 <Label x:Name="StatusLabel" 
                        Text="Ready. Tap button to run sequence." 
