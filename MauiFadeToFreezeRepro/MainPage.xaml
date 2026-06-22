@@ -5,51 +5,115 @@
              x:Class="MauiFadeToFreezeRepro.MainPage"
              BackgroundColor="Black">
 
-    <Grid RowDefinitions="*, Auto" Padding="20">
+    <!-- RootGrid: Mimics RootGrid in GnollHack GamePage.xaml -->
+    <Grid x:Name="RootGrid" HorizontalOptions="Fill" VerticalOptions="Fill" BackgroundColor="Black">
         
-        <!-- Parent Layout: Toggling IsEnabled on this Grid triggers the bug -->
-        <Grid x:Name="MainGrid" Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center">
+        <!-- MainGrid: Toggling IsEnabled on this Grid triggers the bug -->
+        <Grid x:Name="MainGrid" HorizontalOptions="Fill" VerticalOptions="Fill">
             
-            <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
-                <Label Text=".NET MAUI 10.0.60 iOS Touch Event Bug" 
-                       TextColor="White" 
-                       FontSize="20" 
-                       FontAttributes="Bold" 
-                       HorizontalTextAlignment="Center" />
-                
-                <Label Text="CRITICAL: The bug ONLY happens if the faded element is a ContentView or LayoutView!&#x0A;1. Tap 'Trigger Fade Sequence'.&#x0A;2. Wait for the sequence to complete.&#x0A;3. Tap the red rectangle below.&#x0A;If 'Touch detected!' appears, the bug is fixed. If nothing happens, the 10.0.60 touch event bug is present." 
-                       TextColor="LightGray" 
-                       FontSize="14" 
-                       HorizontalTextAlignment="Center" />
+            <!-- MainCanvasView: Mimics SwitchableCanvasView (which is a ContentView wrapping SKCanvasView) -->
+            <ContentView x:Name="MainCanvasView" HorizontalOptions="Fill" VerticalOptions="Fill">
+                <skia:SKCanvasView x:Name="InternalCanvas" 
+                                   EnableTouchEvents="True"
+                                   Touch="OnCanvasTouch"
+                                   PaintSurface="OnCanvasPaintSurface" />
+            </ContentView>
+            
+            <!-- FadeFrame: Mimics the transition/fade overlay frame in GnollHack -->
+            <Frame x:Name="FadeFrame" IsVisible="False" InputTransparent="True" BackgroundColor="Black" BorderColor="Black" CornerRadius="0" HorizontalOptions="Fill" VerticalOptions="Fill" />
 
-                <!-- ContentView: In GnollHack, SKCanvasView is wrapped in SwitchableCanvasView (which is a ContentView). -->
-                <ContentView x:Name="MainCanvasWrapper">
-                    <skia:SKCanvasView x:Name="MainCanvasView" 
-                                       HeightRequest="200" 
-                                       WidthRequest="200"
-                                       EnableTouchEvents="True"
-                                       Touch="OnCanvasTouch"
-                                       PaintSurface="OnCanvasPaintSurface" />
-                </ContentView>
-                
-                <Label x:Name="StatusLabel" 
-                       Text="Ready. Tap button to run sequence." 
-                       TextColor="Yellow" 
-                       FontSize="18" 
-                       FontAttributes="Bold" 
-                       HorizontalTextAlignment="Center" />
-            </VerticalStackLayout>
+            <!-- Mimic PleaseWaitLabel -->
+            <Label x:Name="PleaseWaitLabel" Text="Please wait..." IsVisible="False" TextColor="White" FontSize="36"
+                   HorizontalOptions="Center" VerticalOptions="Center"/>
+
+            <!-- UIGrid: Mimics the main overlay container for buttons/HUD in GnollHack -->
+            <Grid x:Name="UIGrid" RowSpacing="0" ColumnSpacing="0" InputTransparent="True" CascadeInputTransparent="False" HorizontalOptions="Fill" VerticalOptions="Fill">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Upper buttons (GameMenuButton, ESCButton) -->
+                <Grid Grid.Row="0" x:Name="StoneButtonGrid" InputTransparent="True" CascadeInputTransparent="False" Padding="10" HorizontalOptions="End">
+                    <HorizontalStackLayout Spacing="10">
+                        <Button x:Name="GameMenuButton" Text="Menu" Clicked="GameMenuButton_Clicked" BackgroundColor="DarkGray" />
+                        <Button x:Name="ESCButton" Text="ESC" Clicked="ESCButton_Clicked" BackgroundColor="DarkGray" />
+                    </HorizontalStackLayout>
+                </Grid>
+
+                <!-- Information overlay -->
+                <VerticalStackLayout Grid.Row="1" Spacing="10" VerticalOptions="Center" HorizontalOptions="Center" InputTransparent="False">
+                    <Label Text="GnollHack GamePage Replica" 
+                           TextColor="White" 
+                           FontSize="20" 
+                           FontAttributes="Bold" 
+                           HorizontalTextAlignment="Center" />
+                    
+                    <Label Text="1. Tap 'Trigger Fade Sequence'.&#x0A;2. MainGrid.IsEnabled = false is set.&#x0A;3. MenuGrid is made visible and faded in.&#x0A;4. After 1 sec, MenuGrid is faded out and MainGrid.IsEnabled = true is set.&#x0A;5. Tap the bouncing football to test the touch." 
+                           TextColor="LightGray" 
+                           FontSize="14" 
+                           HorizontalTextAlignment="Center" />
+
+                    <Label x:Name="StatusLabel" 
+                           Text="Ready. Tap 'Trigger Fade Sequence' to start." 
+                           TextColor="Yellow" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+
+                <!-- Bottom action buttons -->
+                <Grid Grid.Row="2" x:Name="ButtonRowGrid" HorizontalOptions="Fill" VerticalOptions="End" BackgroundColor="#66000000" Padding="10" InputTransparent="False">
+                    <HorizontalStackLayout HorizontalOptions="Center" Spacing="10">
+                        <Button x:Name="TriggerBtn" 
+                                Text="Trigger Fade Sequence" 
+                                Clicked="OnTriggerBugClicked" 
+                                BackgroundColor="DarkRed" 
+                                TextColor="White" 
+                                HeightRequest="50" />
+                        
+                        <Button x:Name="lInventoryButton" Text="Inventory" Clicked="GHButton_Clicked" BackgroundColor="DimGray" />
+                        <Button x:Name="lSearchButton" Text="Search" Clicked="GHButton_Clicked" BackgroundColor="DimGray" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </Grid>
             
         </Grid>
 
-        <Button Grid.Row="1" 
-                x:Name="TriggerBtn"
-                Text="Trigger Fade Sequence" 
-                Clicked="OnTriggerBugClicked" 
-                BackgroundColor="DarkRed" 
-                TextColor="White" 
-                HeightRequest="50" 
-                Margin="10" />
+        <!-- MenuGrid: Mimics GnollHack's Menu Overlay (Fades in/out) -->
+        <Grid x:Name="MenuGrid" HorizontalOptions="Fill" VerticalOptions="Fill" BackgroundColor="#AA000000" IsVisible="False">
+            <Frame BackgroundColor="#303030" BorderColor="Gray" WidthRequest="300" HeightRequest="300" HorizontalOptions="Center" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="20" VerticalOptions="Center">
+                    <Label Text="Game Menu (MainGrid Disabled)" TextColor="White" FontSize="18" HorizontalTextAlignment="Center" />
+                    <Button x:Name="MenuOKButton" Text="OK" Clicked="MenuOKButton_Clicked" BackgroundColor="DarkRed" TextColor="White" WidthRequest="150" />
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
+        <!-- PopupGrid: Mimics GnollHack's Popup Dialog Grid -->
+        <Grid x:Name="PopupGrid" HorizontalOptions="Fill" VerticalOptions="Fill" BackgroundColor="#66000000" IsVisible="False">
+            <Frame BackgroundColor="#303030" BorderColor="Gray" WidthRequest="280" HeightRequest="200" HorizontalOptions="Center" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="20" VerticalOptions="Center">
+                    <Label x:Name="PopupLabel" Text="Popup Message" TextColor="White" FontSize="16" HorizontalTextAlignment="Center" />
+                    <Button x:Name="PopupOkButton" Text="OK" Clicked="PopupOkButton_Clicked" BackgroundColor="DarkRed" TextColor="White" WidthRequest="120" />
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
+        <!-- YnGrid: Mimics GnollHack's Yes/No dialog Grid -->
+        <Grid x:Name="YnGrid" HorizontalOptions="Fill" VerticalOptions="Fill" BackgroundColor="#66000000" IsVisible="False">
+            <Frame BackgroundColor="#303030" BorderColor="Gray" WidthRequest="300" HeightRequest="200" HorizontalOptions="Center" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="20" VerticalOptions="Center">
+                    <Label x:Name="YnQuestionLabel" Text="Do you want to exit?" TextColor="White" FontSize="16" HorizontalTextAlignment="Center" />
+                    <HorizontalStackLayout Spacing="15" HorizontalOptions="Center">
+                        <Button Text="Yes" Clicked="YnButton_Clicked" BackgroundColor="DarkRed" TextColor="White" WidthRequest="100" />
+                        <Button Text="No" Clicked="YnButton_Clicked" BackgroundColor="DarkGray" TextColor="White" WidthRequest="100" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+            </Frame>
+        </Grid>
+
     </Grid>
 
 </ContentPage>

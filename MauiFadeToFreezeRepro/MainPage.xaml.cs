@@ -1,16 +1,18 @@
+using System;
 using SkiaSharp;
 using SkiaSharp.Views.Maui;
+using Microsoft.Maui.Controls;
 
 namespace MauiFadeToFreezeRepro;
 
 /// <summary>
-/// MainPage demonstrating the .NET MAUI 10.0.60 iOS Touch Event Bug.
+/// MainPage demonstrating the .NET MAUI 10.0.60 iOS Touch Event Bug using a GamePage replica layout.
 /// </summary>
 public partial class MainPage : ContentPage
 {
 	private int _touchCount = 0;
 	private FootballAnimation _football = new FootballAnimation();
-	private IDispatcherTimer? _timer;
+	private IDispatcherTimer? _animationTimer;
 	private DateTime _lastUpdate;
 
 	public MainPage()
@@ -23,19 +25,20 @@ public partial class MainPage : ContentPage
 		base.OnAppearing();
 		_lastUpdate = DateTime.Now;
 		
-		_timer = Dispatcher.CreateTimer();
-		_timer.Interval = TimeSpan.FromMilliseconds(1000.0 / 60.0);
-		_timer.Tick += (s, e) =>
+		// Invalidate canvas at 60 FPS
+		_animationTimer = Dispatcher.CreateTimer();
+		_animationTimer.Interval = TimeSpan.FromMilliseconds(1000.0 / 60.0);
+		_animationTimer.Tick += (s, e) =>
 		{
-			MainCanvasView.InvalidateSurface();
+			InternalCanvas.InvalidateSurface();
 		};
-		_timer.Start();
+		_animationTimer.Start();
 	}
 
 	protected override void OnDisappearing()
 	{
 		base.OnDisappearing();
-		_timer?.Stop();
+		_animationTimer?.Stop();
 	}
 
 	private void OnCanvasPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -51,7 +54,7 @@ public partial class MainPage : ContentPage
 		_football.Update(dt, e.Info.Width, e.Info.Height);
 		_football.Draw(canvas);
 
-		// Keeping the interactive prompt text
+		// Interactive prompt text
 		using var paint = new SKPaint
 		{
 			Color = SKColors.White,
@@ -59,7 +62,7 @@ public partial class MainPage : ContentPage
 		};
 
 		var coord = new SKPoint(e.Info.Width / 2f, e.Info.Height / 2f);
-		canvas.DrawText("Tap Me!", coord, SKTextAlign.Center, new SKFont(SKTypeface.Default, 24), paint);
+		canvas.DrawText("Tap Football!", coord, SKTextAlign.Center, new SKFont(SKTypeface.Default, 24), paint);
 	}
 
 	private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
@@ -75,12 +78,12 @@ public partial class MainPage : ContentPage
 	}
 
 	/// <summary>
-	/// Triggers the animation sequence that reproduces the bug.
+	/// Triggers the fade sequence mimicking GnollHack showing a menu.
 	/// </summary>
 	private async void OnTriggerBugClicked(object? sender, EventArgs e)
 	{
 		TriggerBtn.IsEnabled = false;
-		StatusLabel.Text = "Running fade sequence...";
+		StatusLabel.Text = "Opening Menu (MainGrid disabled)...";
 		StatusLabel.TextColor = Colors.Yellow;
 		_touchCount = 0;
 		
@@ -88,43 +91,42 @@ public partial class MainPage : ContentPage
 		{
 			// =========================================================================
 			// BUG TRIGGER IN 10.0.60:
-			// Setting IsEnabled = false triggers the Visual State Manager (VSM) to 
-			// update the visual states of all descendent controls, including the 
-			// MainCanvasWrapper (ContentView).
+			// Setting MainGrid.IsEnabled = false propagates down the visual tree.
+			// It updates the visual states of descendent controls, including the 
+			// MainCanvasView (ContentView).
 			//
-			// This invokes UpdateBackground in Microsoft.Maui.Platform.ViewExtensions (iOS).
-			// Since the wrapper does not have an explicit MAUI background color, 
-			// the new code introduced in MAUI PR #31340 (10.0.60) assigns:
-			//     if (platformView is LayoutView or ContentView)
-			//         platformView.BackgroundColor = null;
+			// This invokes UpdateBackground in Microsoft.Maui.Platform.ViewExtensions.
+			// Since MainCanvasView (ContentView) has no explicit BackgroundColor set in MAUI, 
+			// the 10.0.60 code sets its platform view's BackgroundColor to null.
 			//
-			// When BackgroundColor becomes null, the native iOS view drops touches or 
-			// becomes transparent to hit-testing, breaking the touch event handlers
-			// permanently for everything inside it even after it fades back in.
+			// This makes the iOS view transparent to hit testing, causing iOS to drop 
+			// subsequent touch events even after MainGrid is re-enabled.
 			// =========================================================================
 			MainGrid.IsEnabled = false;
 			
-			MainCanvasWrapper.Opacity = 1.0;
+			// Show Menu overlay (mimicking GnollHack MenuGrid)
+			MenuGrid.Opacity = 0.0;
+			MenuGrid.IsVisible = true;
+			await MenuGrid.FadeTo(1.0, 250);
 
-			StatusLabel.Text = "Fading out (FadeToAsync 0.0)...";
-			await MainCanvasWrapper.FadeToAsync(0.0, 500);
+			StatusLabel.Text = "Menu visible. Simulating delayed closing (1 sec)...";
 
-			StatusLabel.Text = "Simulating load delay...";
-			
-			var delayTimer = Dispatcher.CreateTimer();
-			delayTimer.Interval = TimeSpan.FromMilliseconds(1000);
-			delayTimer.IsRepeating = false;
-			delayTimer.Tick += async (s, ev) =>
+			// Delay using non-blocking dispatcher timer
+			var closeTimer = Dispatcher.CreateTimer();
+			closeTimer.Interval = TimeSpan.FromMilliseconds(1000);
+			closeTimer.IsRepeating = false;
+			closeTimer.Tick += async (s, ev) =>
 			{
 				try
 				{
-					MainGrid.IsEnabled = true;
-					
-					StatusLabel.Text = "Fading in (FadeToAsync 1.0)...";
-					MainCanvasWrapper.Opacity = 0.0;
-					await MainCanvasWrapper.FadeToAsync(1.0, 500);
+					StatusLabel.Text = "Fading out MenuGrid...";
+					await MenuGrid.FadeTo(0.0, 250);
+					MenuGrid.IsVisible = false;
 
-					StatusLabel.Text = "Sequence completed! Now tap the red square.";
+					// Re-enable MainGrid
+					MainGrid.IsEnabled = true;
+
+					StatusLabel.Text = "Sequence completed! Try tapping the football.";
 				}
 				catch (Exception ex)
 				{
@@ -136,7 +138,7 @@ public partial class MainPage : ContentPage
 					TriggerBtn.IsEnabled = true;
 				}
 			};
-			delayTimer.Start();
+			closeTimer.Start();
 		}
 		catch (Exception ex)
 		{
@@ -144,5 +146,45 @@ public partial class MainPage : ContentPage
 			StatusLabel.TextColor = Colors.Red;
 			TriggerBtn.IsEnabled = true;
 		}
+	}
+
+	// Placeholders for GnollHack GamePage emulation events
+
+	private void GameMenuButton_Clicked(object? sender, EventArgs e)
+	{
+		// Mock showing popup dialog
+		PopupLabel.Text = "Game Menu Button Clicked!";
+		PopupGrid.IsVisible = true;
+	}
+
+	private void ESCButton_Clicked(object? sender, EventArgs e)
+	{
+		// Mock exit question dialog
+		YnGrid.IsVisible = true;
+	}
+
+	private void GHButton_Clicked(object? sender, EventArgs e)
+	{
+		if (sender is Button btn)
+		{
+			StatusLabel.Text = $"{btn.Text} action triggered.";
+			StatusLabel.TextColor = Colors.LightBlue;
+		}
+	}
+
+	private void MenuOKButton_Clicked(object? sender, EventArgs e)
+	{
+		MenuGrid.IsVisible = false;
+		MainGrid.IsEnabled = true;
+	}
+
+	private void PopupOkButton_Clicked(object? sender, EventArgs e)
+	{
+		PopupGrid.IsVisible = false;
+	}
+
+	private void YnButton_Clicked(object? sender, EventArgs e)
+	{
+		YnGrid.IsVisible = false;
 	}
 }
