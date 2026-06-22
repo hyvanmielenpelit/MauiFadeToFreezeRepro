@@ -1,0 +1,17 @@
+# Build and output folders
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio / Visual Studio Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# OS generated files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:skia="clr-namespace:SkiaSharp.Views.Maui.Controls;assembly=SkiaSharp.Views.Maui.Controls"
+             x:Class="MauiFadeToFreezeRepro.MainPage"
+             BackgroundColor="Black">
+
+    <Grid RowDefinitions="*, Auto" Padding="20">
+        
+        <!-- Parent Layout: Toggling IsEnabled on this Grid triggers the bug -->
+        <Grid x:Name="MainGrid" Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center">
+            
+            <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
+                <Label Text=".NET MAUI 10.0.60 iOS FadeToAsync Freeze" 
+                       TextColor="White" 
+                       FontSize="20" 
+                       FontAttributes="Bold" 
+                       HorizontalTextAlignment="Center" />
+                
+                <Label Text="This SKCanvasView below has NO explicit background color. When MainPage.xaml.cs toggles MainGrid.IsEnabled while opacity is animated or set to 0, iOS CoreAnimation drops the layer, causing FadeToAsync to freeze forever on MAUI 10.0.60." 
+                       TextColor="LightGray" 
+                       FontSize="14" 
+                       HorizontalTextAlignment="Center" />
+
+                <!-- SKCanvasView: Crucially, BackgroundColor/Background is NOT set. -->
+                <skia:SKCanvasView x:Name="MainCanvasView" 
+                                   HeightRequest="200" 
+                                   WidthRequest="200" />
+                
+                <Label x:Name="StatusLabel" 
+                       Text="Ready. Tap button to run sequence." 
+                       TextColor="Yellow" 
+                       FontSize="18" 
+                       FontAttributes="Bold" 
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+            
+        </Grid>
+
+        <Button Grid.Row="1" 
+                x:Name="TriggerBtn"
+                Text="Trigger Fade Sequence" 
+                Clicked="OnTriggerBugClicked" 
+                BackgroundColor="DarkRed" 
+                TextColor="White" 
+                HeightRequest="50" 
+                Margin="10" />
+    </Grid>
+
+</ContentPage>
