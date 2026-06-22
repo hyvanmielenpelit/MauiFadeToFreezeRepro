@@ -110,23 +110,38 @@ public partial class MainPage : ContentPage
 			await MainCanvasWrapper.FadeToAsync(0.0, 500);
 
 			StatusLabel.Text = "Simulating load delay...";
-			await Task.Delay(1000);
-
-			MainGrid.IsEnabled = true;
 			
-			StatusLabel.Text = "Fading in (FadeToAsync 1.0)...";
-			MainCanvasWrapper.Opacity = 0.0;
-			await MainCanvasWrapper.FadeToAsync(1.0, 500);
+			var delayTimer = Dispatcher.CreateTimer();
+			delayTimer.Interval = TimeSpan.FromMilliseconds(1000);
+			delayTimer.IsRepeating = false;
+			delayTimer.Tick += async (s, ev) =>
+			{
+				try
+				{
+					MainGrid.IsEnabled = true;
+					
+					StatusLabel.Text = "Fading in (FadeToAsync 1.0)...";
+					MainCanvasWrapper.Opacity = 0.0;
+					await MainCanvasWrapper.FadeToAsync(1.0, 500);
 
-			StatusLabel.Text = "Sequence completed! Now tap the red square.";
+					StatusLabel.Text = "Sequence completed! Now tap the red square.";
+				}
+				catch (Exception ex)
+				{
+					StatusLabel.Text = $"Error: {ex.Message}";
+					StatusLabel.TextColor = Colors.Red;
+				}
+				finally
+				{
+					TriggerBtn.IsEnabled = true;
+				}
+			};
+			delayTimer.Start();
 		}
 		catch (Exception ex)
 		{
 			StatusLabel.Text = $"Error: {ex.Message}";
 			StatusLabel.TextColor = Colors.Red;
-		}
-		finally
-		{
 			TriggerBtn.IsEnabled = true;
 		}
 	}
