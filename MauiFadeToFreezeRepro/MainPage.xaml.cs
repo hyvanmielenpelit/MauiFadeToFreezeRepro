@@ -9,10 +9,33 @@ namespace MauiFadeToFreezeRepro;
 public partial class MainPage : ContentPage
 {
 	private int _touchCount = 0;
+	private FootballAnimation _football = new FootballAnimation();
+	private IDispatcherTimer? _timer;
+	private DateTime _lastUpdate;
 
 	public MainPage()
 	{
 		InitializeComponent();
+	}
+
+	protected override void OnAppearing()
+	{
+		base.OnAppearing();
+		_lastUpdate = DateTime.Now;
+		
+		_timer = Dispatcher.CreateTimer();
+		_timer.Interval = TimeSpan.FromMilliseconds(1000.0 / 60.0);
+		_timer.Tick += (s, e) =>
+		{
+			MainCanvasView.InvalidateSurface();
+		};
+		_timer.Start();
+	}
+
+	protected override void OnDisappearing()
+	{
+		base.OnDisappearing();
+		_timer?.Stop();
 	}
 
 	private void OnCanvasPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
@@ -20,16 +43,23 @@ public partial class MainPage : ContentPage
 		var canvas = e.Surface.Canvas;
 		canvas.Clear(SKColors.DarkRed);
 
+		var now = DateTime.Now;
+		var dt = (now - _lastUpdate).TotalSeconds;
+		_lastUpdate = now;
+
+		// Draw the bouncing football
+		_football.Update(dt, e.Info.Width, e.Info.Height);
+		_football.Draw(canvas);
+
+		// Keeping the interactive prompt text
 		using var paint = new SKPaint
 		{
 			Color = SKColors.White,
 			IsAntialias = true,
-			TextSize = 24,
-			TextAlign = SKTextAlign.Center
 		};
 
 		var coord = new SKPoint(e.Info.Width / 2f, e.Info.Height / 2f);
-		canvas.DrawText("Tap Me!", coord, paint);
+		canvas.DrawText("Tap Me!", coord, SKTextAlign.Center, new SKFont(SKTypeface.Default, 24), paint);
 	}
 
 	private void OnCanvasTouch(object? sender, SKTouchEventArgs e)
