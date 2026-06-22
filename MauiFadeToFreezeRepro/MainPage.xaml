@@ -11,21 +11,24 @@
         <Grid x:Name="MainGrid" Grid.Row="0" VerticalOptions="Center" HorizontalOptions="Center">
             
             <VerticalStackLayout Spacing="20" HorizontalOptions="Center">
-                <Label Text=".NET MAUI 10.0.60 iOS FadeToAsync Freeze" 
+                <Label Text=".NET MAUI 10.0.60 iOS Touch Event Bug" 
                        TextColor="White" 
                        FontSize="20" 
                        FontAttributes="Bold" 
                        HorizontalTextAlignment="Center" />
                 
-                <Label Text="This SKCanvasView below has NO explicit background color. When MainPage.xaml.cs toggles MainGrid.IsEnabled while opacity is animated or set to 0, iOS CoreAnimation drops the layer, causing FadeToAsync to freeze forever on MAUI 10.0.60." 
+                <Label Text="1. Tap 'Trigger Fade Sequence'.&#x0A;2. Wait for the sequence to complete.&#x0A;3. Tap the red rectangle below.&#x0A;If 'Touch detected!' appears, the bug is fixed. If nothing happens, the 10.0.60 touch event bug is present." 
                        TextColor="LightGray" 
                        FontSize="14" 
                        HorizontalTextAlignment="Center" />
 
-                <!-- SKCanvasView: Crucially, BackgroundColor/Background is NOT set. -->
+                <!-- SKCanvasView: Crucially, BackgroundColor/Background is NOT set explicitly in MAUI layout. -->
                 <skia:SKCanvasView x:Name="MainCanvasView" 
                                    HeightRequest="200" 
-                                   WidthRequest="200" />
+                                   WidthRequest="200"
+                                   EnableTouchEvents="True"
+                                   Touch="OnCanvasTouch"
+                                   PaintSurface="OnCanvasPaintSurface" />
                 
                 <Label x:Name="StatusLabel" 
                        Text="Ready. Tap button to run sequence." 
