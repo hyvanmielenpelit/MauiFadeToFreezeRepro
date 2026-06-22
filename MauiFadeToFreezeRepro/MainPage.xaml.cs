@@ -120,11 +120,11 @@ public partial class MainPage : ContentPage
 				try
 				{
 					StatusLabel.Text = "Fading out MenuGrid...";
-					await MenuGrid.FadeTo(0.0, 250);
-					MenuGrid.IsVisible = false;
 
-					// Re-enable MainGrid
-					MainGrid.IsEnabled = true;
+                    // Re-enable MainGrid
+                    MainGrid.IsEnabled = true;
+                    await MenuGrid.FadeTo(0.0, 250);
+					MenuGrid.IsVisible = false;
 
 					StatusLabel.Text = "Sequence completed! Try tapping the football.";
 				}
