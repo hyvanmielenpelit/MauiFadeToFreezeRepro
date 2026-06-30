@@ -18,6 +18,10 @@ public partial class MainPage : ContentPage
 	public MainPage()
 	{
 		InitializeComponent();
+		
+		var assembly = typeof(Microsoft.Maui.Controls.View).Assembly;
+		var versionAttr = System.Reflection.CustomAttributeExtensions.GetCustomAttribute<System.Reflection.AssemblyInformationalVersionAttribute>(assembly);
+		MauiVersionLabel.Text = $"MAUI Version: {versionAttr?.InformationalVersion ?? assembly.GetName().Version?.ToString()} (Expected: 10.0.91)";
 	}
 
 	protected override void OnAppearing()

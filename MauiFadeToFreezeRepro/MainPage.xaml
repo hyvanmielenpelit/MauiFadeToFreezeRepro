@@ -61,6 +61,12 @@
                            FontSize="18" 
                            FontAttributes="Bold" 
                            HorizontalTextAlignment="Center" />
+
+                    <Label x:Name="MauiVersionLabel" 
+                           TextColor="Gray" 
+                           FontSize="12" 
+                           HorizontalTextAlignment="Center" 
+                           Margin="0,10,0,0" />
                 </VerticalStackLayout>
 
                 <!-- Bottom action buttons -->
